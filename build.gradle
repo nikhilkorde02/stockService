@@ -22,7 +22,15 @@ dependencies {
 	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 	implementation 'com.yahoofinance-api:YahooFinanceAPI:3.6.1'
 	runtimeOnly 'com.h2database:h2'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+	testImplementation 'org.mockito:mockito-junit-jupiter:4.6.1'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j:2.1.3'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator:2.7.1'
+	implementation 'org.springframework.cloud:spring-cloud-starter-config:3.1.3'
+	implementation 'org.springframework.boot:spring-boot-starter-aop:2.7.1'
+
 }
 
 dependencyManagement {

@@ -1,11 +1,17 @@
 package com.springboot.stockService.resource;
 
 import java.io.IOException;
-import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -20,12 +26,16 @@ import yahoofinance.YahooFinance;
 
 @RestController
 @RequestMapping("/rest/stock")
+@RefreshScope
 public class StockResource {
 
 
     @Autowired
+	@Lazy
     RestTemplate restTemplate;
 
+//	@Value("${microservice.db-service.endpoints.endpoint.uri}")
+//	private String endpoint_url;
 
     YahooFinance yahooFinance;
 
@@ -34,15 +44,11 @@ public class StockResource {
     }
 
 
-	 @GetMapping("/{userName}")
+	    @GetMapping("/{userName}")
+	    @CircuitBreaker(name="StockService", fallbackMethod = "getDbServiceFallback")
+		//@Retry(name="StockService", fallbackMethod = "getDbServiceFallback")
 	    public List<Quote> getStock(@PathVariable("userName")
 	    final String userName) {
-
-
-		 //The following line willl retrieve the data from Maintanence Service
-
-		 //http://localhost:8300/rest/db/{userName}
-		 //localhost:8300 -> db-service
 		 ResponseEntity<List<String>> quoteResponse=restTemplate.
 				 exchange("http://db-service/rest/db/"+userName,
 				 HttpMethod.GET,
@@ -50,20 +56,7 @@ public class StockResource {
 				 new ParameterizedTypeReference<List<String>>() {
          });
 
-
-
-
 		List<String> quotes=quoteResponse.getBody();
-
-
-
-
-		//stock1, stock2,stock3
-		//stock1 - 100$
-		//stock2-200$
-		//stock3-400$
-
-//The following line get the latest price for each and every stock
 	    return quotes
                 .stream()
                 .map(quote -> {
@@ -71,10 +64,16 @@ public class StockResource {
                 return new Quote(quote,stock.getCurrency()); //(reliance,100$) //(SBI,200$)
                 })
                 .collect(Collectors.toList());
-
-
-
 	 }
+
+		 public List<Quote> getDbServiceFallback(Exception exception)
+		 {
+			 System.out.println("getDbServiceFallback methode call");
+			 Quote quote1 = new Quote("Dummy","120$");
+			 List<Quote> quotes = new ArrayList<Quote>();
+			 quotes.add(quote1);
+		     return quotes;
+		 }
 
 	 private class Quote{
 		 private String quote;
